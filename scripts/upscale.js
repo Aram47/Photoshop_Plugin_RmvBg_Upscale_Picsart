@@ -5,11 +5,14 @@
     upscale_factor : integer |required| (2,4,6,8) default -> 2
     format : string ((JPG, PNG, WEBP) default -> JPG
 */
-const {UpscaleFetchHandler} = require('./upscaleFetchHandler');
+const { PicsartFetchHandler } = require('./picsartFetchHandler');
+const { Cache } = require('./cache');
 
 class Upscale {
     constructor(root) {
-        this.upscale = new UpscaleFetchHandler();
+        this.upscale = new PicsartFetchHandler();
+        this.cache = new Cache();
+        this.url = 'https://api.picsart.io/tools/1.0/upscale';
         this.isActive = false;
         this.root = root;
         this.body = document.createElement('div');
@@ -35,7 +38,21 @@ class Upscale {
     }
     eventListenerAdder() {
         this.submitButton.addEventListener('click', () => {
-            this.upscale.toUpscale(this.select.value);
+            // this.select.value (2,4,6,8)
+            
+            const form = new FormData();
+            form.append('upscale_factor', typeof(this.select.value) === 'undefined' ? "2" : this.select.value);
+            form.append('format', 'JPG');
+
+            const options = {
+                method : 'POST',
+                headers : {
+                    accept : 'application/json',
+                    'X-Picsart-API-Key': this.cache.getAuthKey(),
+                },
+            }
+            
+            this.upscale.fetchToPicsart(this.url, options, form);
         });
     }
     buildTree() {

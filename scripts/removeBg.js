@@ -17,11 +17,14 @@
     stroke_opacity : integer | null (0 to 100) default -> 100           // -
     format : string (PNG, JPG, WEBP) default -> PNG                     // -
 */
-const {RemoveBgFetchHandler} = require('./removeBgFetchHandler');
+const { PicsartFetchHandler } = require('./picsartFetchHandler');
+const { Cache } = require('./cache');
 
 class RemoveBg {
     constructor(root) {
-        this.remove = new RemoveBgFetchHandler();
+        this.removeBg = new PicsartFetchHandler();
+        this.cache = new Cache();
+        this.url = 'https://api.picsart.io/tools/1.0/removebg';
         this.isActive = true;
         this.root = root;
         this.body = document.createElement('div');
@@ -33,7 +36,28 @@ class RemoveBg {
     }
     eventListenerAdder() {
         this.removeButton.addEventListener('click', () => {
-            this.remove.toRemove();
+            const form = new FormData();
+            form.append('output_type', 'cutout');
+            form.append('bg_blur', '0');
+            form.append('scale', 'fit');
+            form.append('auto_center', 'false');
+            form.append('stroke_size', '0');
+            form.append('stroke_color', 'FFFFFF');
+            form.append('stroke_opacity', '100');
+            form.append('shadow', 'disabled');
+            form.append('shadow_opacity', '20');
+            form.append('shadow_blur', '50');
+            form.append('format', 'JPG');
+        
+            const options = {
+                method : 'POST',
+                headers : {
+                    accept : 'application/json',
+                    'X-Picsart-API-Key': this.cache.getAuthKey(),
+                },
+            }
+            
+            this.removeBg.fetchToPicsart(this.url, options, form);
         });
     }
     buildTree() {
